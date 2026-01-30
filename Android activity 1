@@ -1,0 +1,229 @@
+Here is the clean, serial code for all 4 activities. I have kept it strictly to Plain Java and XML as requested.
+1. AndroidManifest.xml
+Crucial: You must register all activities here for the app to work.
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.treasurehunt">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="Treasure Hunt"
+        android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
+
+        <activity android:name=".MainActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        
+        <activity android:name=".Screen2Activity" />
+        <activity android:name=".Screen3Activity" />
+        <activity android:name=".FinalActivity" />
+
+    </application>
+</manifest>
+
+2. Activity 1: The Riddle
+Layout (activity_main.xml)
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="CLUE 1: I have a thumb and four fingers, but no flesh or bone. What am I?"
+        android:textSize="18sp"
+        android:textAlignment="center"/>
+
+    <EditText
+        android:id="@+id/et_answer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter answer"
+        android:layout_marginTop="20dp"/>
+
+    <Button
+        android:id="@+id/btn_check"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Check Answer"
+        android:layout_marginTop="10dp"/>
+</LinearLayout>
+
+Java (MainActivity.java)
+package com.example.treasurehunt;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class MainActivity extends AppCompatActivity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        EditText etAnswer = findViewById(R.id.et_answer);
+        Button btnCheck = findViewById(R.id.btn_check);
+
+        btnCheck.setOnClickListener(v -> {
+            if (etAnswer.getText().toString().equalsIgnoreCase("Glove")) {
+                Toast.makeText(this, "Correct!", Toast.LENGTH_SHORT).show();
+                startActivity(new Intent(MainActivity.this, Screen2Activity.class));
+            } else {
+                Toast.makeText(this, "Try Again!", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+}
+
+3. Activity 2: The Map (Implicit Intent)
+Layout (activity_screen2.xml)
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="CLUE 2: Go to the secret island."
+        android:textSize="18sp"/>
+
+    <Button
+        android:id="@+id/btn_map"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Open Secret Map"/>
+
+    <Button
+        android:id="@+id/btn_next"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Proceed to next clue"
+        android:layout_marginTop="20dp"/>
+</LinearLayout>
+
+Java (Screen2Activity.java)
+package com.example.treasurehunt;
+
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.widget.Button;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class Screen2Activity extends AppCompatActivity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_screen2);
+
+        findViewById(R.id.btn_map).setOnClickListener(v -> {
+            Uri location = Uri.parse("geo:0,0?q=Treasure+Island");
+            Intent mapIntent = new Intent(Intent.ACTION_VIEW, location);
+            startActivity(mapIntent);
+        });
+
+        findViewById(R.id.btn_next).setOnClickListener(v -> {
+            startActivity(new Intent(this, Screen3Activity.class));
+        });
+    }
+}
+
+4. Activity 3: The Call (Implicit Intent)
+Layout (activity_screen3.xml)
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="CLUE 3: Call the Pirate King for the password."
+        android:textSize="18sp"/>
+
+    <Button
+        android:id="@+id/btn_call"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Dial King"/>
+
+    <Button
+        android:id="@+id/btn_finish"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Finish Hunt"
+        android:layout_marginTop="20dp"/>
+</LinearLayout>
+
+Java (Screen3Activity.java)
+package com.example.treasurehunt;
+
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.widget.Button;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class Screen3Activity extends AppCompatActivity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_screen3);
+
+        findViewById(R.id.btn_call).setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_DIAL);
+            intent.setData(Uri.parse("tel:1234567890"));
+            startActivity(intent);
+        });
+
+        findViewById(R.id.btn_finish).setOnClickListener(v -> {
+            startActivity(new Intent(this, FinalActivity.class));
+        });
+    }
+}
+
+5. Activity 4: Success
+Layout (activity_final.xml)
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="💰 TREASURE FOUND! 💰"
+        android:textSize="30sp"
+        android:textStyle="bold"/>
+</LinearLayout>
+
+Java (FinalActivity.java)
+package com.example.treasurehunt;
+
+import android.os.Bundle;
+import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class FinalActivity extends AppCompatActivity {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_final);
+        Toast.makeText(this, "Victory is yours!", Toast.LENGTH_LONG).show();
+    }
+}
+
+Would you like me to explain how to add images to these layouts to make the treasure hunt look more professional?
