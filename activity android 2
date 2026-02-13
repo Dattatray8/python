@@ -1,0 +1,173 @@
+1. The Database Helper (DatabaseHelper.java)
+This class extends SQLiteOpenHelper to handle the creation and version management of your database.
+
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+
+public class DatabaseHelper extends SQLiteOpenHelper {
+
+    private static final String DATABASE_NAME = "StudentDB";
+    private static final int DATABASE_VERSION = 1;
+    public static final String TABLE_NAME = "grades";
+    
+    public static final String COL_1 = "ID";
+    public static final String COL_2 = "NAME";
+    public static final String COL_3 = "MARKS";
+
+    public DatabaseHelper(Context context) {
+        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE " + TABLE_NAME + " (ID INTEGER PRIMARY KEY AUTOINCREMENT, NAME TEXT, MARKS INTEGER)");
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+        onCreate(db);
+    }
+
+    // INSERT
+    public boolean insertData(String name, String marks) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(COL_2, name);
+        contentValues.put(COL_3, marks);
+        long result = db.insert(TABLE_NAME, null, contentValues);
+        return result != -1;
+    }
+
+    // VIEW ALL (Using Cursor)
+    public Cursor getAllData() {
+        SQLiteDatabase db = this.getWritableDatabase();
+        return db.rawQuery("SELECT * FROM " + TABLE_NAME, null);
+    }
+
+    // UPDATE
+    public boolean updateData(String id, String name, String marks) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(COL_2, name);
+        contentValues.put(COL_3, marks);
+        db.update(TABLE_NAME, contentValues, "ID = ?", new String[]{id});
+        return true;
+    }
+
+    // DELETE
+    public Integer deleteData(String id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        return db.delete(TABLE_NAME, "ID = ?", new String[]{id});
+    }
+
+    // MEANINGFUL QUERY 1: Get High Achievers (Marks > 75)
+    public Cursor getHighAchievers() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM " + TABLE_NAME + " WHERE MARKS > 75", null);
+    }
+
+    // MEANINGFUL QUERY 2: Get Average Marks
+    public Cursor getAverageMarks() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT AVG(MARKS) FROM " + TABLE_NAME, null);
+    }
+}
+
+2. The Main Activity (MainActivity.java)
+This connects your UI buttons to the database logic.
+
+import android.database.Cursor;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class MainActivity extends AppCompatActivity {
+    DatabaseHelper myDb;
+    EditText editName, editMarks, editId;
+    Button btnAdd, btnView, btnUpdate, btnDelete, btnStats;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        myDb = new DatabaseHelper(this);
+
+        editName = findViewById(R.id.editText_name);
+        editMarks = findViewById(R.id.editText_marks);
+        editId = findViewById(R.id.editText_id);
+        btnAdd = findViewById(R.id.button_add);
+        btnView = findViewById(R.id.button_view);
+        btnUpdate = findViewById(R.id.button_update);
+        btnDelete = findViewById(R.id.button_delete);
+        btnStats = findViewById(R.id.button_stats);
+
+        addData();
+        viewAll();
+        updateData();
+        deleteData();
+        showStats();
+    }
+
+    public void addData() {
+        btnAdd.setOnClickListener(v -> {
+            boolean isInserted = myDb.insertData(editName.getText().toString(), editMarks.getText().toString());
+            if(isInserted) Toast.makeText(MainActivity.this, "Data Inserted", Toast.LENGTH_LONG).show();
+            else Toast.makeText(MainActivity.this, "Error", Toast.LENGTH_LONG).show();
+        });
+    }
+
+    public void viewAll() {
+        btnView.setOnClickListener(v -> {
+            Cursor res = myDb.getAllData();
+            if(res.getCount() == 0) {
+                showMessage("Error", "Nothing found");
+                return;
+            }
+            StringBuilder buffer = new StringBuilder();
+            while (res.moveToNext()) {
+                buffer.append("Id :").append(res.getString(0)).append("\n");
+                buffer.append("Name :").append(res.getString(1)).append("\n");
+                buffer.append("Marks :").append(res.getString(2)).append("\n\n");
+            }
+            showMessage("Data", buffer.toString());
+        });
+    }
+
+    public void updateData() {
+        btnUpdate.setOnClickListener(v -> {
+            boolean isUpdate = myDb.updateData(editId.getText().toString(), editName.getText().toString(), editMarks.getText().toString());
+            if(isUpdate) Toast.makeText(MainActivity.this, "Data Updated", Toast.LENGTH_LONG).show();
+        });
+    }
+
+    public void deleteData() {
+        btnDelete.setOnClickListener(v -> {
+            Integer deletedRows = myDb.deleteData(editId.getText().toString());
+            if(deletedRows > 0) Toast.makeText(MainActivity.this, "Data Deleted", Toast.LENGTH_LONG).show();
+        });
+    }
+
+    public void showStats() {
+        btnStats.setOnClickListener(v -> {
+            Cursor res = myDb.getHighAchievers();
+            showMessage("High Achievers (>75)", "Count: " + res.getCount());
+        });
+    }
+
+    public void showMessage(String title, String Message) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setCancelable(true);
+        builder.setTitle(title);
+        builder.setMessage(Message);
+        builder.show();
+    }
+}
